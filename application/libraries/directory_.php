@@ -14,14 +14,11 @@
 class directory_ {
 	
 	private $CI; // Codigniter	
-	protected $_oldPath;
-	protected $_newPath;
-	protected $_oldDirectory;
-	protected $_newDirectory;
-	public $scannedDirFolders = array();
-	public $scannedDirFiles	 = array();
+	public $folderData = array();
+	public $folderArray = array();
+	public $strippedFolder = array();
+	public $strippedFiles = array();
 
-	
 	/**
 	 * Constructor
 	 * 
@@ -30,259 +27,197 @@ class directory_ {
 		
 		$this -> CI =& get_instance();
 		
-		$this -> scannedDirFolders = array();
-		$this -> scannedDirFiles	= array();
 	}
 	
 	/**
-	 * Set the old path to the directory
-	 * 
-	 * @param string $oldPath the old path
+	 * __Get function
 	 * 
 	 */
-	public function setOldPath($path) {
+	public function __get($name) {
 		
-		if( is_dir( $path ) ) {
+		if( isset( $this -> folderData[$name]) ) {
 			
-			$this -> _oldPath = $path;
-			
-		} else {
+			return $this -> folderData[$name];
 		
-			$this -> createHeader('Directory Class - Booting');
-			$this -> createLogLine('Oldpath: ' . $path . ' - Kon niet worden gevonden op de server');
-			exit();
-		} 
+		} elseif( isset( $this -> $name ) ) {
+			
+			return $this -> $name;
+		}
 	}
 	
 	/**
-	 * Set the new path to the directory
-	 * 
-	 * @param string $newPath the new path
+	 * __Set function
 	 * 
 	 */
-	public function setNewPath($path) {
-		
-		if( is_dir( $path ) ) {
+	public function __set($name, $value) {
 			
-			$this -> _newPath = $path;
-			
-		} else {
-		
-			$this -> createHeader('Directory Class - Booting');
-			$this -> createLogLine('Newpath: ' . $path . ' - Kon niet worden gevonden op de server');
-			exit();
-		} 
+		$this -> folderData[$name] = $value;
 	}
 	
 	/**
-	 * Set the old directory
-	 * 
-	 * @param string $oldDirecotyr the old dir
-	 * 
+	 * __Isset function
 	 */
-	public function setOldDirectory($directory) {
+	public function __isset($name) {
 		
-		if( is_dir( $this -> _oldPath . $directory ) ) {
+		if( isset($this -> folderData[$name]) ) {
 			
-			$this -> _oldDirectory = $directory;
+			return true;
+			
+		} else if(isset($this -> $name)) {
+			
+			return true;
 			
 		} else {
-		
-			$this -> createHeader('Directory Class - Booting');
-			$this -> createLogLine('OldDirectory: ' . $directory . ' - Kon niet worden gevonden op de server');
-			exit();
-		} 
+			
+			return false;
+		}
 	}
 	
 	/**
-	 * Set the old directory
+	 * Scan the needed folder 
 	 * 
-	 * @param string $oldDirecotyr the old dir
-	 * 
+	 * @param string $path path to the folder
+	 * @param string $folder the folder name
 	 */
-	public function setNewDirectory($directory) {
+	public function scanFolder() {
+			
+		$this -> CI -> load -> helper('directory');
 		
-		if( is_dir( $this -> _newPath . $directory ) ) {
+		if( empty($this -> folder) OR !is_dir($this -> path . $this -> folder ) ) {
 			
-			$this -> _newDirectory = $directory;
-			
+			return false;
+		
 		} else {
-		
-			$this -> createHeader('Directory Class - Booting');
-			$this -> createLogLine('NewDirectory: ' . $directory . ' - Kon niet worden gevonden op de server');
-			exit();
-		} 
+			
+			$this -> folderArray = directory_map($this -> path . $this -> folder, $this -> folderData['directorySettings']);
+		}
 	}
+	
+	public function stripArray($array = '') {
 
-	/**
-	 * Scan a directory
-	 * 
-	 * @param string $dir the older that must be scanned
-	 */
-	public function scanDir($dir = '' ) {
-		
-		// Create log header
-		$this -> createHeader('Directory Class - ScanDir');
-		
-		// CHeck if $dir is empty
-		if( empty( $dir ) ) {
+		if( empty( $array ) ) {
 			
-			$dir = $this -> oldDirPath();
+			$array = $this -> folderArray;
 		}
-		
-		// scan the dir
-		$aScannedDir = scandir( $dir );
-		
-		// check if the folder that must scanned a folder is
-		if( !$aScannedDir ) {
-			
-			//log
-			$this -> createLogLine('Kon de map niet scannen - Map: ' . $dir);
-		
-		} else {
-			
-			//log
-			$this -> createLogLine('Scannen... - Map: ' . $dir);
-			
-			//Fecht the folder trap
-			$this -> _fetchScanDir( $aScannedDir, $dir );
-			
-		}
-	}
-	
-	
-	/**
-	 * Move a scanned folder to a new place
-	 * 
-	 * @param string $oldDir the old folder 
-	 * @param string $newDir the new folder
-	 */
-	public function moveDir($oldDir = '', $newDir = '') {	
-		
-		// Create log header
-		$this -> createHeader('Directory Class - moveDir');
-		
-		if( empty( $oldDir ) ) {
-			
-			$oldDir = $this -> oldDirPath();
-		}
-		
-		if( empty( $newDir ) ) {
-			
-			$newDir = $this -> newDirPath();
-		}
-		
-		$scannedDir = $this -> scanDir($oldDir);
-		
-		// Create log header
-		$this -> createHeader('Directory Class - moveDir');
-		
-		foreach( $this -> scannedDirFolders as $key => $folder ) {
-			
-			$newFolderName = $this -> _replaceName( $folder );
-			
-			$oldPath = $this -> oldDirPath() . $folder;
-			$newPath = $this -> newDirPath() . $newFolderName;
-			
-			$command = 'mv "' . $oldPath . '" "'. $newPath .'"';
-			
-			$this -> _runCommand($command);
-			
-			$this -> createLogLine('Kopieeren van '. $oldPath . ' naar ' . $newPath);
-			$this -> createLogLine('Commandline output:'. $this -> _shellOutput);
-			$this -> createLogLine('Commandline result:'. $this -> _shellResult);
-			
-			$command = 'rm -rf "' . $oldPath . '"';
-			
-			$this -> _runCommand($command);
-			
-			$this -> createLogLine('Kopieeren van '. $oldPath . ' naar ' . $newPath);
-			$this -> createLogLine('Commandline output:'. $this -> _shellOutput);
-			$this -> createLogLine('Commandline result:'. $this -> _shellResult);
-		}
-		
-		
-	}
-	
-	/**
-	 * Run a command in the shell
-	 * 
-	 * @param string $command the shell command
-	 */
-	private function _runCommand($command) {
-		
-		exec($command, $this -> _shellOutput, $this -> _shellResult);
-	}
-	
-	/**
-	 * Fetch the scanned array
-	 * 
-	 * @param array $array folder array
-	 * @param string $dir the path to the scanned folder
-	 */
-	private function _fetchScanDir( $array, $dir ) {
-		
-		//Count
-		$dCount = 0;
-		$fCount = 0;
-		
-		// Foreach the array
-		foreach( $array as $key => $name ) {
-			
-			// Delete soms not needed folders
-			if( $name == '.' or $name == '..' ) {
 				
-				//Nothing
+		foreach($array as $key => $name ) {
+			
+			if( is_array($array[$key]) ) {
 				
-			} else {
-				
-				// Check if it is a folder of a file
-				if( is_dir( $dir . $name ) ) {
+				$this -> countFiles = 0;
+				$this -> countMusic = 0;
+				$this -> countMovie = 0;
+				$this -> countApp	= 0;
+								
+				foreach( $array[$key] as $id => $file ) {
 					
-					// Add to folder array
-					$this -> scannedDirFolders[$dCount] = $name;
-					$dCount++;
+					if( is_array( $array[$key][$id]) ) {
+						
+						foreach( $array[$key][$id] as $sId => $sFile ) {
+						
+							$this -> fileType($key . '/' . $id . '/' . $sFile);
+						}
 					
-					$this -> createLogLine('Gescande map word toegevoed aan array - Map: ' . $dir . $name);
-				
-				} else {
+					} else {
+						
+						$this -> fileType($key . '/' . $file); 
+						
+					}
 					
-					// Add to file array
-					$this -> scannedDirFiles[$fCount] = $name;
-					$fCount++;
-					
-					$this -> createLogLine('Gescande bestand word toegevoed aan array - Bestand: ' . $dir . $name);
 				}
+				
+				$this -> moveFolder($key);
 			}
 		}
 	}
 	
-	/**
-	 * New dir path
-	 */
-	public function newDirPath() {
+	public function fileType($file) {
 		
-		return $this -> _newPath . $this -> _newDirectory;
+		if( is_file( $this -> path . $this -> folder . $file) ) {
+			
+			$contentMime = mime_content_type($this -> path . $this -> folder . $file);
+			
+			$this -> CI -> config -> load('directory');
+			
+			if( in_array($contentMime, $this -> CI -> config -> item('musicMime') ) ) {
+				
+				$this -> countMusic++;
+			
+			} elseif( in_array($contentMime, $this -> CI -> config -> item('movieMime') ) ) {
+				
+				$this -> countMovie++;
+			
+			} elseif( in_array($contentMime, $this -> CI -> config -> item('appMime') ) ) {
+				
+				$this -> countApp++;
+			
+			}
+		}
 	}
 	
-	/**
-	 * Old dir path
-	 */	
-	public function oldDirPath() {
+	public function foldertype() {
 		
-		return $this -> _oldPath . $this -> _oldDirectory;
+		if( $this -> countMusic > $this -> countMovie or $this -> countMusic > $this -> countApp) {
+			
+			$type = 'music';
+		
+		} elseif( $this -> countMovie > $this -> countMusic or $this -> countMovie > $this -> countApp) {
+			
+			$type = 'movie';
+		
+		} elseif( $this -> countApp > $this -> countMusic or  $this -> countApp > $this -> countMovie ) {
+			
+			$type = 'app';
+		
+		} else {
+			
+			$type = 'unkown';
+		}
+		
+		return $type;
+		
 	}
 	
-	private function _replaceName($folderName) {
+	public function moveFolder($folderArray) {
 		
-		return str_replace(' ', '_', $folderName);
+		$this -> CI -> config -> load('directory');
+		
+		$hdd = $this -> CI -> config -> item('hdd');
+		
+		$hdd = $hdd[$this -> foldertype()];
+		
+		$oldFolder = $this -> path . $this -> folder . $folderArray;
+		
+		$newFolder = $hdd . $folderArray;
+		
+		$this -> moveCommand($oldFolder, $newFolder);
+		
+		if( is_dir($newFolder) ) {
+			
+			$this -> deleteCommand($oldFolder);
+		}
+		
 	}
 	
-	private function createLogLine($test) {
+	private function moveCommand($oldFolder, $newFolder) {
 		
+		$command = 'mv "' . $oldFolder . '" "' . $newFolder . '"';
+		exec($command);
+	}
+
+	private function deleteCommand($folder) {
+		
+		$command = 'rm -rf "'.$folder.'"';
+		exec($command);
 	}
 	
-	private function createHeader($test) {
-		
+ 	function mimeArray($url = 'http://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types'){
+    $s=array();
+    foreach(@explode("\n",@file_get_contents($url))as $x)
+        if(isset($x[0])&&$x[0]!=='#'&&preg_match_all('#([^\s]+)#',$x,$out)&&isset($out[1])&&($c=count($out[1]))>1)
+            for($i=1;$i<$c;$i++)
+                $s[]='&nbsp;&nbsp;&nbsp;\''.$out[1][$i].'\' => \''.$out[1][0].'\'';
+    return @sort($s)?'$mime_types = array(<br />'.implode($s,',<br />').'<br />);':false;
 	}
+	
 }
