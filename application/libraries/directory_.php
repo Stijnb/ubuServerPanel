@@ -93,7 +93,7 @@ class directory_ {
 		}
 	}
 	
-	public function stripArray($array = '') {
+	public function copyToCorrectFolder($array = '') {
 
 		if( empty( $array ) ) {
 			
@@ -199,6 +199,30 @@ class directory_ {
 		
 	}
 	
+	public function toDownloadHdd() {
+
+		$this -> CI -> config -> load('directory');
+		$nFolderPath = $this -> CI -> config -> item('complete');
+		$newPath = $nFolderPath['path'];
+		$newFolder = $nFolderPath['folder'];
+		
+		foreach($this -> folderArray as $key => $name ) {
+			
+			if( is_array($this -> folderArray[$key]) ) {
+				
+				if( is_dir($this -> path . $this -> folder . $key) ) {
+					
+					$this -> moveCommand($this -> path . $this -> folder . $key, $newPath . $newFolder . $this -> _replaceName($key) );	
+				}
+				
+				if( is_dir($newPath . $newFolder . $this -> _replaceName($key) ) ) {
+					
+					$this -> deleteCommand($this -> path . $this -> folder . $key);
+				}
+			}
+		}
+	}
+	
 	private function moveCommand($oldFolder, $newFolder) {
 		
 		$command = 'mv "' . $oldFolder . '" "' . $newFolder . '"';
@@ -209,6 +233,11 @@ class directory_ {
 		
 		$command = 'rm -rf "'.$folder.'"';
 		exec($command);
+	}
+	
+	private function _replaceName($folderName) {
+		
+		return str_replace(' ', '_', $folderName);
 	}
 	
  	function mimeArray($url = 'http://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types'){

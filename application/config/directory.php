@@ -49,3 +49,6 @@ $config['appMime'] = array(		'application/zip',
 $config['hdd'] = array(	'music' => '/hdd/music/',
 						'movie' => '/hdd/movie/',
 						'app'	=> '/hdd/app/');
+						
+$config['complete'] = array( 'path' => '/hdd/',
+							 'folder' => 'download/');
