@@ -57,16 +57,14 @@ class Welcome extends CI_Controller {
 	public function dirtest() {
 		
 		$this -> load -> library('directory_');
-		
-		$this -> directory_ -> scanDir('/hdd/download/Project.X.2012.DVDRip.XviD-AMIABLE');
-		print_r( $this -> directory_ -> scannedDirFolders);
-		$array = $this -> directory_ -> scannedDirFiles;
-		
-		foreach( $array as $key => $file ) {
-			
-			echo( $file . mime_content_type( '/hdd/download/Project.X.2012.DVDRip.XviD-AMIABLE/'.$file ) . '<br>');
-		}
+		header( 'Content-Type: text/html; charset=UTF-8' );
+		$this -> directory_ -> path = '/hdd/';
+		$this -> directory_ -> folder = 'download/';
+		$this -> directory_ -> directorySettings = 'False, TRUE';
+		$this -> directory_ -> scanFolder();
+		$this -> directory_ -> stripArray();
 	}
+	
 
 }
 
