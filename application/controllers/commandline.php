@@ -27,7 +27,37 @@ class Commandline extends CI_Controller {
 			$this -> directory_ -> folder = 'download/';
 			$this -> directory_ -> directorySettings = 'False, TRUE';
 			$this -> directory_ -> scanFolder();
-			$this -> directory_ -> stripArray();
+			$this -> directory_ -> copyToCorrectFolder();
 		} 
+	}
+	
+	public function changeFolderRights($password) {
+		
+		if( empty($password) or $password != 'password') {
+			
+			exit;
+		
+		} else {
+			
+			shell_exec('chown -R www-data:debian-transmission "/home/torrent/complete"');
+		} 
+	}
+	
+	public function completeToDownload($password) {
+		
+		if( empty($password) or $password != 'password') {
+			
+			exit;
+		
+		} else {
+			
+			$this -> load -> library('directory_');
+			header( 'Content-Type: text/html; charset=UTF-8' );
+			$this -> directory_ -> path = '/home/torrent/';
+			$this -> directory_ -> folder = 'complete/';
+			$this -> directory_ -> directorySettings = 'False, TRUE';
+			$this -> directory_ -> scanFolder();
+			$this -> directory_ -> toDownloadHdd();
+		}
 	}
 }
